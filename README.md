@@ -5,7 +5,10 @@ A 4-voice polyphonic synthesizer for Raspberry Pi with touchscreen control, desi
 ## Features
 
 ### Sound Engine
-- **Dual Oscillators** - Sine, square, saw, triangle, and noise waveforms
+- **Dual Oscillators** - Sine, square, saw, triangle, noise, and wavetable waveforms
+- **Wavetable Synthesis** - 4 built-in tables (Basic, PWM, Harmonics, Formant) with position morphing
+- **Pulse Width Modulation** - Variable pulse width for square waves with LFO modulation
+- **Unison/Super-Saw** - Up to 7 stacked oscillators with spread detuning
 - **Oscillator Mix** - Blend between OSC1 and OSC2
 - **Detune** - ±100 cents for rich unison sounds
 - **Sub-Oscillator** - Octave-down for bass weight
@@ -13,6 +16,13 @@ A 4-voice polyphonic synthesizer for Raspberry Pi with touchscreen control, desi
 - **Filter Envelope** - Dedicated ADSR with bipolar modulation depth
 - **LFO** - Sine, triangle, saw, square waveforms for filter modulation
 - **Amplitude Envelope** - Full ADSR control
+
+### Arpeggiator
+- **Patterns** - Up, Down, Up-Down, Random, As-Played
+- **Divisions** - 1/4, 1/8, 1/16, 1/32 notes
+- **Tempo** - 40-240 BPM
+- **Octave Range** - 1-4 octaves
+- **Gate Length** - Adjustable note duration
 
 ### Effects
 - **Delay** - Time and feedback control
@@ -81,10 +91,11 @@ aconnect <your-device>:0 128:0 # Connect to synth
 
 | Tab | Description |
 |-----|-------------|
-| OSC | Oscillator waveforms, mix, detune, sub-oscillator |
+| OSC | Oscillator waveforms, wavetable, mix, detune, unison, sub-oscillator |
 | FLT | Filter type, cutoff, resonance, amplitude envelope |
 | FX  | Delay, reverb, distortion |
-| MOD | LFO rate/depth, filter envelope amount |
+| MOD | LFO rate/depth, filter envelope, PWM controls |
+| ARP | Arpeggiator on/off, pattern, tempo, octaves, gate |
 | PRE | Preset load/save with name editing |
 | SET | Buffer size, panic button |
 
@@ -124,9 +135,11 @@ ButterySynth/
 │   ├── synth.c/h       # Voice management, global parameters
 │   ├── voice.c/h       # Individual voice processing
 │   ├── oscillator.c/h  # Waveform generation
+│   ├── wavetable.c/h   # Wavetable synthesis
 │   ├── envelope.c/h    # ADSR envelope
 │   ├── filter.c/h      # State variable filter
 │   ├── lfo.c/h         # Low frequency oscillator
+│   ├── arp.c/h         # Arpeggiator
 │   ├── effects.c/h     # Delay, reverb, distortion
 │   ├── preset.c/h      # JSON preset save/load
 │   ├── midi.c/h        # ALSA MIDI input
