@@ -8,6 +8,40 @@ static const int COMB_TUNINGS[NUM_COMB_FILTERS] = {1116, 1188, 1277, 1356};
 static const int ALLPASS_TUNINGS[NUM_ALLPASS_FILTERS] = {556, 441};
 
 //------------------------------------------------------------------------------
+// Tanh lookup table for distortion (avoid per-sample tanhf)
+//------------------------------------------------------------------------------
+#define TANH_TABLE_SIZE 1024
+#define TANH_RANGE 5.0f  // table covers -5.0 to +5.0
+
+static float tanh_table[TANH_TABLE_SIZE];
+static int tanh_table_initialized = 0;
+
+static void init_tanh_table(void) {
+    if (tanh_table_initialized) return;
+    for (int i = 0; i < TANH_TABLE_SIZE; i++) {
+        float x = ((float)i / (TANH_TABLE_SIZE - 1)) * 2.0f * TANH_RANGE - TANH_RANGE;
+        tanh_table[i] = tanhf(x);
+    }
+    tanh_table_initialized = 1;
+}
+
+static float fast_tanh(float x) {
+    // Clamp to table range
+    if (x >= TANH_RANGE) return 1.0f;
+    if (x <= -TANH_RANGE) return -1.0f;
+
+    // Convert to table index with linear interpolation
+    float normalized = (x + TANH_RANGE) / (2.0f * TANH_RANGE);
+    float idx_f = normalized * (TANH_TABLE_SIZE - 1);
+    int idx = (int)idx_f;
+    float frac = idx_f - idx;
+
+    if (idx >= TANH_TABLE_SIZE - 1) return tanh_table[TANH_TABLE_SIZE - 1];
+
+    return tanh_table[idx] + frac * (tanh_table[idx + 1] - tanh_table[idx]);
+}
+
+//------------------------------------------------------------------------------
 // Delay
 //------------------------------------------------------------------------------
 
@@ -141,6 +175,7 @@ static float reverb_process(Reverb *r, float input) {
 //------------------------------------------------------------------------------
 
 static void distortion_init(Distortion *d) {
+    init_tanh_table();
     d->drive = 1.0f;
     d->mix = 0.0f;
 }
@@ -161,11 +196,17 @@ static float distortion_process(Distortion *d, float input) {
     // Apply drive
     float driven = input * d->drive;
 
-    // Soft clip using tanh
-    float distorted = tanhf(driven);
+    // Soft clip using fast tanh lookup
+    float distorted = fast_tanh(driven);
 
-    // Normalize output (compensate for drive)
-    distorted /= tanhf(d->drive);
+    // Normalize output (compensate for drive) - use cached value
+    static float last_drive = 0.0f;
+    static float drive_norm = 1.0f;
+    if (d->drive != last_drive) {
+        last_drive = d->drive;
+        drive_norm = fast_tanh(d->drive);
+    }
+    distorted /= drive_norm;
 
     return input * (1.0f - d->mix) + distorted * d->mix;
 }

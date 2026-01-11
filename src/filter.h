@@ -16,6 +16,10 @@ typedef struct {
     float cutoff;      // normalized 0.0 - 1.0 (maps to 20Hz - 20kHz)
     float resonance;   // 0.0 - 1.0
     FilterType type;   // which output to use
+
+    // Cached coefficients (avoid per-sample trig)
+    float fc;          // frequency coefficient
+    float q;           // resonance coefficient
 } SVFilter;
 
 void filter_init(SVFilter *f);

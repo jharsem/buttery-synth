@@ -105,6 +105,18 @@ void synth_note_off(Synth *s, int note) {
     }
 }
 
+void synth_panic(Synth *s) {
+    // Force all voices off immediately
+    for (int i = 0; i < NUM_VOICES; i++) {
+        voice_note_off(&s->voices[i]);
+        // Also reset the envelope to silence immediately
+        s->voices[i].env.stage = 0;  // IDLE
+        s->voices[i].env.level = 0.0f;
+        s->voices[i].filter_env.stage = 0;
+        s->voices[i].filter_env.level = 0.0f;
+    }
+}
+
 float synth_process(Synth *s) {
     float mix = 0.0f;
     int active_count = 0;

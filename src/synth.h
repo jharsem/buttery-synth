@@ -43,6 +43,7 @@ typedef struct {
 void synth_init(Synth *s);
 void synth_note_on(Synth *s, int note, int velocity);
 void synth_note_off(Synth *s, int note);
+void synth_panic(Synth *s);  // All notes off
 float synth_process(Synth *s);
 
 // Parameter setters

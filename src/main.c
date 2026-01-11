@@ -15,6 +15,8 @@ static Synth g_synth;
 static Effects g_effects;
 static UI g_ui;
 static pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
+static AudioStream g_stream;
+static const int BUFFER_SIZES[] = {512, 256, 128};
 
 // Audio callback - called by raylib to fill audio buffer
 static void SynthAudioCallback(void *buffer, unsigned int frames) {
@@ -93,19 +95,19 @@ int main(void) {
 
     // Initialize audio
     InitAudioDevice();
-    SetAudioStreamBufferSizeDefault(512);  // Low latency buffer
 
     // Initialize synth components BEFORE starting audio stream
     synth_init(&g_synth);
     effects_init(&g_effects);
 
-    // Create audio stream (stereo, float32)
-    AudioStream stream = LoadAudioStream(44100, 32, 2);
-    SetAudioStreamCallback(stream, SynthAudioCallback);
-    PlayAudioStream(stream);
-
     // Initialize UI (needs synth/effects pointers)
     ui_init(&g_ui, &g_synth, &g_effects);
+
+    // Create audio stream with initial buffer size from UI
+    SetAudioStreamBufferSizeDefault(BUFFER_SIZES[g_ui.buffer_size]);
+    g_stream = LoadAudioStream(44100, 32, 2);
+    SetAudioStreamCallback(g_stream, SynthAudioCallback);
+    PlayAudioStream(g_stream);
 
     // Initialize MIDI
     MidiInput midi;
@@ -154,6 +156,25 @@ int main(void) {
         // Update UI (handles touch input)
         pthread_mutex_lock(&g_mutex);
         ui_update(&g_ui);
+
+        // Handle panic button
+        if (g_ui.panic_triggered) {
+            synth_panic(&g_synth);
+            g_ui.panic_triggered = false;
+        }
+
+        // Handle buffer size change
+        if (g_ui.buffer_changed) {
+            StopAudioStream(g_stream);
+            UnloadAudioStream(g_stream);
+            SetAudioStreamBufferSizeDefault(BUFFER_SIZES[g_ui.buffer_size]);
+            g_stream = LoadAudioStream(44100, 32, 2);
+            SetAudioStreamCallback(g_stream, SynthAudioCallback);
+            PlayAudioStream(g_stream);
+            g_ui.buffer_changed = false;
+            printf("Audio buffer changed to %d samples\n", BUFFER_SIZES[g_ui.buffer_size]);
+        }
+
         pthread_mutex_unlock(&g_mutex);
 
         // Draw UI to render texture (logical landscape coordinates)
@@ -178,8 +199,8 @@ int main(void) {
     }
 
     UnloadRenderTexture(target);
-    StopAudioStream(stream);
-    UnloadAudioStream(stream);
+    StopAudioStream(g_stream);
+    UnloadAudioStream(g_stream);
     CloseAudioDevice();
     CloseWindow();
 

@@ -25,6 +25,11 @@ typedef struct {
     char preset_name[32];   // Current preset name
     bool editing_name;      // True when editing preset name
 
+    // Settings
+    int buffer_size;        // 0=512, 1=256, 2=128
+    bool panic_triggered;   // True when panic button pressed
+    bool buffer_changed;    // True when buffer size changed (needs restart)
+
     // Waveform display buffer
     float waveform_buffer[256];
     int waveform_pos;

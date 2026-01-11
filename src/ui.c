@@ -68,7 +68,8 @@ enum {
 static const char *WAVE_NAMES[] = {"SIN", "SQR", "SAW", "TRI", "NSE"};
 static const char *FILTER_NAMES[] = {"LP", "HP", "BP"};
 static const char *LFO_NAMES[] = {"SIN", "TRI", "SAW", "SQR"};
-static const char *PAGE_NAMES[] = {"OSC", "FLT", "FX", "MOD", "PRE"};
+static const char *PAGE_NAMES[] = {"OSC", "FLT", "FX", "MOD", "PRE", "SET"};
+static const char *BUFFER_NAMES[] = {"512", "256", "128"};
 
 void ui_init(UI *ui, Synth *synth, Effects *effects) {
     ui->synth = synth;
@@ -81,6 +82,9 @@ void ui_init(UI *ui, Synth *synth, Effects *effects) {
     ui->current_preset = 1;
     strcpy(ui->preset_name, "Init");
     ui->editing_name = false;
+    ui->buffer_size = 1;  // Default to 256 (index 1)
+    ui->panic_triggered = false;
+    ui->buffer_changed = false;
     ui->active_control = CTRL_NONE;
     ui->waveform_pos = 0;
     ui->last_touch_x = 0;
@@ -182,10 +186,10 @@ void ui_draw(UI *ui) {
     ClearBackground(BG_COLOR);
 
     // Page tabs at top
-    int tab_width = 60;
+    int tab_width = 55;
     int tab_height = 30;
     int tab_y = 5;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
         Rectangle tab = {PANEL_MARGIN + i * (tab_width + 5), tab_y, tab_width, tab_height};
         Color tab_color = (i == ui->current_page) ? SLIDER_FG : SLIDER_BG;
         DrawRectangleRec(tab, tab_color);
@@ -338,7 +342,7 @@ void ui_draw(UI *ui) {
         }
         DrawText("(Uses Amp ADSR)", panel_x + 10, panel_y + 60, 12, TEXT_COLOR);
 
-    } else {
+    } else if (ui->current_page == 4) {
         // PRESET PAGE
         DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 150, content_height, PANEL_COLOR);
         DrawText("PRESETS", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
@@ -534,6 +538,60 @@ void ui_draw(UI *ui) {
                 }
             }
         }
+
+    } else {
+        // SETTINGS PAGE
+        DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 100, content_height, PANEL_COLOR);
+        DrawText("SETTINGS", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+
+        // Buffer size selector
+        DrawText("Audio Buffer:", panel_x + 20, panel_y + 40, 14, TEXT_COLOR);
+
+        int buf_x = panel_x + 130;
+        int buf_y = panel_y + 35;
+        int buf_w = 60;
+        int buf_h = 28;
+
+        for (int i = 0; i < 3; i++) {
+            Rectangle buf_btn = {buf_x + i * (buf_w + 5), buf_y, buf_w, buf_h};
+            Color btn_col = (ui->buffer_size == i) ? SLIDER_FG : SLIDER_BG;
+            DrawRectangleRec(buf_btn, btn_col);
+            int tw = MeasureText(BUFFER_NAMES[i], 14);
+            DrawText(BUFFER_NAMES[i], buf_btn.x + (buf_w - tw) / 2, buf_btn.y + 7, 14,
+                     (ui->buffer_size == i) ? BG_COLOR : TEXT_COLOR);
+
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                Vector2 mouse = GetTransformedTouch();
+                if (CheckCollisionPointRec(mouse, buf_btn) && ui->buffer_size != i) {
+                    ui->buffer_size = i;
+                    ui->buffer_changed = true;
+                }
+            }
+        }
+
+        // Show latency info
+        const char *latency_info[] = {"~11.6ms", "~5.8ms", "~2.9ms"};
+        DrawText(latency_info[ui->buffer_size], buf_x + 200, buf_y + 7, 14, WAVE_COLOR);
+
+        // Buffer changes apply immediately at runtime
+
+        // Panic button
+        panel_x += PANEL_WIDTH + 100 + PANEL_MARGIN;
+        DrawRectangle(panel_x, panel_y, PANEL_WIDTH, content_height, PANEL_COLOR);
+        DrawText("MIDI", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+
+        Rectangle panic_btn = {panel_x + 20, panel_y + 40, 120, 50};
+        DrawRectangleRec(panic_btn, (Color){200, 60, 60, 255});
+        DrawText("PANIC", panic_btn.x + 30, panic_btn.y + 16, 18, WHITE);
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            Vector2 mouse = GetTransformedTouch();
+            if (CheckCollisionPointRec(mouse, panic_btn)) {
+                ui->panic_triggered = true;
+            }
+        }
+
+        DrawText("All notes off", panel_x + 20, panel_y + 100, 12, TEXT_COLOR);
     }
 
     // Waveform display (bottom area)
