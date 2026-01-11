@@ -14,6 +14,10 @@ void synth_init(Synth *s) {
     s->pulse_width = 0.5f;  // 50% duty cycle
     s->pwm_rate = 1.0f;     // 1 Hz
     s->pwm_depth = 0.0f;    // Off by default
+
+    s->unison_count = 1;    // No unison by default
+    s->unison_spread = 20.0f; // 20 cents spread
+
     s->filter_cutoff = 0.7f;
     s->filter_resonance = 0.2f;
     s->filter_type = FILTER_LOWPASS;
@@ -102,6 +106,10 @@ void synth_note_on(Synth *s, int note, int velocity) {
     v->pulse_width = s->pulse_width;
     lfo_set_rate(&v->pwm_lfo, s->pwm_rate);
     lfo_set_depth(&v->pwm_lfo, s->pwm_depth);
+
+    // Unison settings
+    v->unison_count = s->unison_count;
+    v->unison_spread = s->unison_spread;
 
     voice_note_on(v, note, velocity);
 }
@@ -217,6 +225,26 @@ void synth_set_pwm_depth(Synth *s, float depth) {
     // Update active voices
     for (int i = 0; i < NUM_VOICES; i++) {
         lfo_set_depth(&s->voices[i].pwm_lfo, depth);
+    }
+}
+
+void synth_set_unison_count(Synth *s, int count) {
+    if (count < 1) count = 1;
+    if (count > MAX_UNISON) count = MAX_UNISON;
+    s->unison_count = count;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        s->voices[i].unison_count = count;
+    }
+}
+
+void synth_set_unison_spread(Synth *s, float spread) {
+    if (spread < 0.0f) spread = 0.0f;
+    if (spread > 100.0f) spread = 100.0f;
+    s->unison_spread = spread;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        s->voices[i].unison_spread = spread;
     }
 }
 

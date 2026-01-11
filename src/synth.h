@@ -19,6 +19,11 @@ typedef struct {
     float pulse_width;      // Base pulse width (0.05-0.95)
     float pwm_rate;         // PWM LFO rate (Hz)
     float pwm_depth;        // PWM LFO depth (0.0-0.45)
+
+    // Unison (supersaw)
+    int unison_count;       // 1-7 voices
+    float unison_spread;    // Detune spread in cents (0-100)
+
     float filter_cutoff;
     float filter_resonance;
     FilterType filter_type;
@@ -60,6 +65,8 @@ void synth_set_sub_osc_mix(Synth *s, float mix);
 void synth_set_pulse_width(Synth *s, float width);
 void synth_set_pwm_rate(Synth *s, float rate);
 void synth_set_pwm_depth(Synth *s, float depth);
+void synth_set_unison_count(Synth *s, int count);
+void synth_set_unison_spread(Synth *s, float spread);
 void synth_set_filter(Synth *s, float cutoff, float resonance, FilterType type);
 void synth_set_adsr(Synth *s, float a, float d, float s_level, float r);
 void synth_set_filter_env_adsr(Synth *s, float a, float d, float sus, float r);

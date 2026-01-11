@@ -6,10 +6,17 @@
 #include "filter.h"
 #include "lfo.h"
 
+#define MAX_UNISON 7    // Maximum unison voices (including main)
+
 typedef struct {
     Oscillator osc;
     Oscillator osc2;    // Second oscillator for mixing
     Oscillator sub_osc; // Sub-oscillator (octave down)
+
+    // Unison oscillators (for supersaw effect)
+    Oscillator unison_oscs[MAX_UNISON - 1];  // Extra unison oscillators
+    int unison_count;       // 1-7 (1 = no unison, 7 = full supersaw)
+    float unison_spread;    // Detune spread in cents (0-100)
     float osc_mix;      // 0.0 = osc1 only, 1.0 = osc2 only, 0.5 = equal mix
     float osc2_detune;  // Detune in cents (-100 to +100)
     float sub_osc_mix;  // 0.0 = no sub, 1.0 = full sub

@@ -27,7 +27,7 @@ static Vector2 GetTransformedTouch(void) {
 #define PANEL_MARGIN  16
 
 #define SLIDER_HEIGHT 20
-#define SLIDER_WIDTH  160
+#define SLIDER_WIDTH  120
 #define LABEL_WIDTH   50
 
 // Colors
@@ -65,7 +65,9 @@ enum {
     CTRL_FILT_ENV_AMT,
     CTRL_PULSE_WIDTH,
     CTRL_PWM_RATE,
-    CTRL_PWM_DEPTH
+    CTRL_PWM_DEPTH,
+    CTRL_UNISON_COUNT,
+    CTRL_UNISON_SPREAD
 };
 
 static const char *WAVE_NAMES[] = {"SIN", "SQR", "SAW", "TRI", "NSE"};
@@ -255,6 +257,26 @@ void ui_draw(UI *ui) {
         }
         s->volume = draw_slider("Vol", s->volume, 0.0f, 1.0f,
                                 panel_x + 10, panel_y + 120, CTRL_VOLUME, ui);
+
+        // UNISON panel (compact)
+        panel_x += PANEL_WIDTH + PANEL_MARGIN;
+        DrawRectangle(panel_x, panel_y, SLIDER_WIDTH + LABEL_WIDTH + 70, content_height, PANEL_COLOR);
+        DrawText("UNI", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+
+        // Unison count as slider (1-7)
+        float uni_val = draw_slider("Voc", (float)s->unison_count, 1.0f, 7.0f,
+                                    panel_x + 10, panel_y + 30, CTRL_UNISON_COUNT, ui);
+        int new_unison = (int)(uni_val + 0.5f);
+        if (new_unison != s->unison_count) {
+            synth_set_unison_count(s, new_unison);
+        }
+
+        // Spread slider
+        float new_spread = draw_slider("Sprd", s->unison_spread, 0.0f, 100.0f,
+                                       panel_x + 10, panel_y + 60, CTRL_UNISON_SPREAD, ui);
+        if (new_spread != s->unison_spread) {
+            synth_set_unison_spread(s, new_spread);
+        }
 
     } else if (ui->current_page == 1) {
         // FILTER PAGE: Filter + Envelope

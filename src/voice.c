@@ -4,6 +4,14 @@ void voice_init(Voice *v) {
     osc_init(&v->osc);
     osc_init(&v->osc2);
     osc_init(&v->sub_osc);
+
+    // Initialize unison oscillators
+    for (int i = 0; i < MAX_UNISON - 1; i++) {
+        osc_init(&v->unison_oscs[i]);
+    }
+    v->unison_count = 1;    // No unison by default
+    v->unison_spread = 0.0f;
+
     v->osc_mix = 0.0f;      // Default to osc1 only
     v->osc2_detune = 0.0f;  // No detune by default
     v->sub_osc_mix = 0.0f;  // No sub by default
@@ -40,6 +48,30 @@ void voice_note_on(Voice *v, int note, int velocity) {
     // Sub-oscillator at octave down
     osc_set_frequency(&v->sub_osc, freq * 0.5f);
 
+    // Set up unison oscillators with spread detuning
+    // Spread oscillators symmetrically around the base frequency
+    if (v->unison_count > 1) {
+        int extra_oscs = v->unison_count - 1;
+        for (int i = 0; i < extra_oscs; i++) {
+            // Calculate detune for this oscillator
+            // Spread from -spread to +spread across all extra oscillators
+            float detune_cents;
+            if (extra_oscs == 1) {
+                // With 2 total, put the extra one above
+                detune_cents = v->unison_spread;
+            } else {
+                // Spread evenly: -spread, ..., +spread
+                detune_cents = -v->unison_spread + (2.0f * v->unison_spread * i / (extra_oscs - 1));
+            }
+            float uni_mult = powf(2.0f, detune_cents / 1200.0f);
+            osc_set_frequency(&v->unison_oscs[i], freq * uni_mult);
+            osc_set_type(&v->unison_oscs[i], v->osc.type);
+            osc_set_pulse_width(&v->unison_oscs[i], v->pulse_width);
+            // Randomize phase for each unison osc for a fuller sound
+            v->unison_oscs[i].phase = (float)(i * 0.14159f);  // Spread phases
+        }
+    }
+
     // Trigger envelopes
     env_gate_on(&v->env);
     env_gate_on(&v->filter_env);
@@ -70,8 +102,20 @@ float voice_process(Voice *v) {
     osc_set_pulse_width(&v->osc, mod_pw);
     osc_set_pulse_width(&v->osc2, mod_pw);
 
-    // Generate and mix oscillator samples
+    // Generate main oscillator with unison
     float osc1_out = osc_generate(&v->osc);
+
+    // Add unison oscillators to osc1
+    if (v->unison_count > 1) {
+        int extra_oscs = v->unison_count - 1;
+        for (int i = 0; i < extra_oscs; i++) {
+            osc_set_pulse_width(&v->unison_oscs[i], mod_pw);
+            osc1_out += osc_generate(&v->unison_oscs[i]);
+        }
+        // Gentle normalization using sqrt to preserve volume
+        osc1_out /= sqrtf((float)v->unison_count);
+    }
+
     float osc2_out = osc_generate(&v->osc2);
     float sub_out = osc_generate(&v->sub_osc);
 
