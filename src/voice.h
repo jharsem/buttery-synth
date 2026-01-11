@@ -13,6 +13,11 @@ typedef struct {
     float osc_mix;      // 0.0 = osc1 only, 1.0 = osc2 only, 0.5 = equal mix
     float osc2_detune;  // Detune in cents (-100 to +100)
     float sub_osc_mix;  // 0.0 = no sub, 1.0 = full sub
+
+    // Pulse Width Modulation
+    float pulse_width;      // Base pulse width (0.05-0.95)
+    LFO pwm_lfo;            // LFO for pulse width modulation
+
     Envelope env;
     Envelope filter_env;        // Filter envelope
     float filter_env_amount;    // Filter env depth (-1.0 to +1.0)

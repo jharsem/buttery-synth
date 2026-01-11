@@ -62,7 +62,10 @@ enum {
     CTRL_VOLUME,
     CTRL_LFO_RATE,
     CTRL_LFO_DEPTH,
-    CTRL_FILT_ENV_AMT
+    CTRL_FILT_ENV_AMT,
+    CTRL_PULSE_WIDTH,
+    CTRL_PWM_RATE,
+    CTRL_PWM_DEPTH
 };
 
 static const char *WAVE_NAMES[] = {"SIN", "SQR", "SAW", "TRI", "NSE"};
@@ -341,6 +344,27 @@ void ui_draw(UI *ui) {
             synth_set_filter_env_amount(s, new_amt);
         }
         DrawText("(Uses Amp ADSR)", panel_x + 10, panel_y + 60, 12, TEXT_COLOR);
+
+        // PWM panel
+        panel_x += PANEL_WIDTH + 60 + PANEL_MARGIN;
+        DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 60, content_height, PANEL_COLOR);
+        DrawText("PWM", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+        float new_pw = draw_slider("Width", s->pulse_width, 0.05f, 0.95f,
+                                   panel_x + 10, panel_y + 30, CTRL_PULSE_WIDTH, ui);
+        if (new_pw != s->pulse_width) {
+            synth_set_pulse_width(s, new_pw);
+        }
+        float new_pwm_rate = draw_slider("Rate", s->pwm_rate, 0.1f, 20.0f,
+                                         panel_x + 10, panel_y + 60, CTRL_PWM_RATE, ui);
+        if (new_pwm_rate != s->pwm_rate) {
+            synth_set_pwm_rate(s, new_pwm_rate);
+        }
+        float new_pwm_depth = draw_slider("Depth", s->pwm_depth, 0.0f, 0.45f,
+                                          panel_x + 10, panel_y + 90, CTRL_PWM_DEPTH, ui);
+        if (new_pwm_depth != s->pwm_depth) {
+            synth_set_pwm_depth(s, new_pwm_depth);
+        }
+        DrawText("(Square waves)", panel_x + 10, panel_y + 120, 12, TEXT_COLOR);
 
     } else if (ui->current_page == 4) {
         // PRESET PAGE

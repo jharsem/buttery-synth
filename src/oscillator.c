@@ -10,6 +10,7 @@ void osc_init(Oscillator *osc) {
     osc->phase = 0.0f;
     osc->frequency = 440.0f;
     osc->type = WAVE_SINE;
+    osc->pulse_width = 0.5f;  // 50% duty cycle
     osc->noise_seed = 12345;
 }
 
@@ -19,6 +20,12 @@ void osc_set_frequency(Oscillator *osc, float freq) {
 
 void osc_set_type(Oscillator *osc, WaveType type) {
     osc->type = type;
+}
+
+void osc_set_pulse_width(Oscillator *osc, float width) {
+    if (width < 0.05f) width = 0.05f;  // Prevent silent extremes
+    if (width > 0.95f) width = 0.95f;
+    osc->pulse_width = width;
 }
 
 // Simple noise generator (xorshift)
@@ -39,7 +46,7 @@ float osc_generate(Oscillator *osc) {
             break;
 
         case WAVE_SQUARE:
-            sample = (phase < 0.5f) ? 1.0f : -1.0f;
+            sample = (phase < osc->pulse_width) ? 1.0f : -1.0f;
             break;
 
         case WAVE_SAW:

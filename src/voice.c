@@ -7,6 +7,8 @@ void voice_init(Voice *v) {
     v->osc_mix = 0.0f;      // Default to osc1 only
     v->osc2_detune = 0.0f;  // No detune by default
     v->sub_osc_mix = 0.0f;  // No sub by default
+    v->pulse_width = 0.5f;  // 50% duty cycle
+    lfo_init(&v->pwm_lfo);
     env_init(&v->env);
     env_init(&v->filter_env);
     v->filter_env_amount = 0.0f;
@@ -42,8 +44,9 @@ void voice_note_on(Voice *v, int note, int velocity) {
     env_gate_on(&v->env);
     env_gate_on(&v->filter_env);
 
-    // Reset LFO phase (key-sync)
+    // Reset LFO phases (key-sync)
     v->filter_lfo.phase = 0.0f;
+    v->pwm_lfo.phase = 0.0f;
 }
 
 void voice_note_off(Voice *v) {
@@ -58,6 +61,14 @@ float voice_process(Voice *v) {
     if (!voice_is_active(v)) {
         return 0.0f;
     }
+
+    // Apply PWM modulation to oscillators
+    float pwm_mod = lfo_process(&v->pwm_lfo);
+    float mod_pw = v->pulse_width + pwm_mod;
+    if (mod_pw < 0.05f) mod_pw = 0.05f;
+    if (mod_pw > 0.95f) mod_pw = 0.95f;
+    osc_set_pulse_width(&v->osc, mod_pw);
+    osc_set_pulse_width(&v->osc2, mod_pw);
 
     // Generate and mix oscillator samples
     float osc1_out = osc_generate(&v->osc);

@@ -14,6 +14,11 @@ typedef struct {
     float osc_mix;          // Oscillator mix (0=osc1, 1=osc2)
     float osc2_detune;      // Detune in cents (-100 to +100)
     float sub_osc_mix;      // Sub-oscillator mix (0=none, 1=full)
+
+    // Pulse Width Modulation
+    float pulse_width;      // Base pulse width (0.05-0.95)
+    float pwm_rate;         // PWM LFO rate (Hz)
+    float pwm_depth;        // PWM LFO depth (0.0-0.45)
     float filter_cutoff;
     float filter_resonance;
     FilterType filter_type;
@@ -52,6 +57,9 @@ void synth_set_wave_type2(Synth *s, WaveType type);
 void synth_set_osc_mix(Synth *s, float mix);
 void synth_set_osc2_detune(Synth *s, float cents);
 void synth_set_sub_osc_mix(Synth *s, float mix);
+void synth_set_pulse_width(Synth *s, float width);
+void synth_set_pwm_rate(Synth *s, float rate);
+void synth_set_pwm_depth(Synth *s, float depth);
 void synth_set_filter(Synth *s, float cutoff, float resonance, FilterType type);
 void synth_set_adsr(Synth *s, float a, float d, float s_level, float r);
 void synth_set_filter_env_adsr(Synth *s, float a, float d, float sus, float r);

@@ -11,6 +11,9 @@ void synth_init(Synth *s) {
     s->osc_mix = 0.0f;      // Default to osc1 only
     s->osc2_detune = 0.0f;  // No detune by default
     s->sub_osc_mix = 0.0f;  // No sub by default
+    s->pulse_width = 0.5f;  // 50% duty cycle
+    s->pwm_rate = 1.0f;     // 1 Hz
+    s->pwm_depth = 0.0f;    // Off by default
     s->filter_cutoff = 0.7f;
     s->filter_resonance = 0.2f;
     s->filter_type = FILTER_LOWPASS;
@@ -94,6 +97,11 @@ void synth_note_on(Synth *s, int note, int velocity) {
     lfo_set_rate(&v->filter_lfo, s->lfo_rate);
     lfo_set_depth(&v->filter_lfo, s->lfo_depth);
     lfo_set_type(&v->filter_lfo, s->lfo_type);
+
+    // PWM settings
+    v->pulse_width = s->pulse_width;
+    lfo_set_rate(&v->pwm_lfo, s->pwm_rate);
+    lfo_set_depth(&v->pwm_lfo, s->pwm_depth);
 
     voice_note_on(v, note, velocity);
 }
@@ -179,6 +187,36 @@ void synth_set_sub_osc_mix(Synth *s, float mix) {
     // Update active voices
     for (int i = 0; i < NUM_VOICES; i++) {
         s->voices[i].sub_osc_mix = mix;
+    }
+}
+
+void synth_set_pulse_width(Synth *s, float width) {
+    if (width < 0.05f) width = 0.05f;
+    if (width > 0.95f) width = 0.95f;
+    s->pulse_width = width;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        s->voices[i].pulse_width = width;
+    }
+}
+
+void synth_set_pwm_rate(Synth *s, float rate) {
+    if (rate < 0.1f) rate = 0.1f;
+    if (rate > 20.0f) rate = 20.0f;
+    s->pwm_rate = rate;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        lfo_set_rate(&s->voices[i].pwm_lfo, rate);
+    }
+}
+
+void synth_set_pwm_depth(Synth *s, float depth) {
+    if (depth < 0.0f) depth = 0.0f;
+    if (depth > 0.45f) depth = 0.45f;  // Max 45% to stay within 5-95% range
+    s->pwm_depth = depth;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        lfo_set_depth(&s->voices[i].pwm_lfo, depth);
     }
 }
 
