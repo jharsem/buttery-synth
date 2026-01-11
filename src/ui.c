@@ -70,8 +70,9 @@ enum {
     CTRL_UNISON_SPREAD
 };
 
-static const char *WAVE_NAMES[] = {"SIN", "SQR", "SAW", "TRI", "NSE"};
+static const char *WAVE_NAMES[] = {"SIN", "SQR", "SAW", "TRI", "NSE", "WT"};
 static const char *FILTER_NAMES[] = {"LP", "HP", "BP"};
+static const char *WT_NAMES[] = {"Basic", "PWM", "Harm", "Fmt"};
 static const char *LFO_NAMES[] = {"SIN", "TRI", "SAW", "SQR"};
 static const char *PAGE_NAMES[] = {"OSC", "FLT", "FX", "MOD", "PRE", "SET"};
 static const char *BUFFER_NAMES[] = {"512", "256", "128"};
@@ -220,18 +221,48 @@ void ui_draw(UI *ui) {
         // OSC PAGE: OSC1 + OSC2 + Mix
         DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 20, content_height, PANEL_COLOR);
         DrawText("OSC 1", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+        // First row: SIN, SQR, SAW, TRI, NSE
         int new_wave = draw_button_row("Wave", WAVE_NAMES, 5, ui->selected_wave,
                                        panel_x + 10, panel_y + 25);
+        // Second row: WT only (aligned under SIN)
+        int wt_sel = draw_button_row("", WAVE_NAMES + 5, 1,
+                                     (ui->selected_wave == 5) ? 0 : -1,
+                                     panel_x + 10, panel_y + 50);
+        if (wt_sel == 0 && ui->selected_wave != 5) {
+            new_wave = 5;  // WT selected
+        }
         if (new_wave != ui->selected_wave) {
             ui->selected_wave = new_wave;
             synth_set_wave_type(s, (WaveType)new_wave);
         }
 
+        // Show wavetable controls if WT selected for OSC1
+        if (s->wave_type == WAVE_WAVETABLE) {
+            int new_wt = draw_button_row("Table", WT_NAMES, 4, (int)s->wavetable_type,
+                                         panel_x + 10, panel_y + 75);
+            if (new_wt != (int)s->wavetable_type) {
+                synth_set_wavetable(s, (WavetableType)new_wt);
+            }
+            float new_pos = draw_slider("Pos", s->wt_position, 0.0f, 1.0f,
+                                        panel_x + 10, panel_y + 100, CTRL_NONE, ui);
+            if (new_pos != s->wt_position) {
+                synth_set_wt_position(s, new_pos);
+            }
+        }
+
         panel_x += PANEL_WIDTH + 20 + PANEL_MARGIN;
         DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 20, content_height, PANEL_COLOR);
         DrawText("OSC 2", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+        // First row: SIN, SQR, SAW, TRI, NSE
         int new_wave2 = draw_button_row("Wave", WAVE_NAMES, 5, ui->selected_wave2,
                                         panel_x + 10, panel_y + 25);
+        // Second row: WT only (aligned under SIN)
+        int wt_sel2 = draw_button_row("", WAVE_NAMES + 5, 1,
+                                      (ui->selected_wave2 == 5) ? 0 : -1,
+                                      panel_x + 10, panel_y + 50);
+        if (wt_sel2 == 0 && ui->selected_wave2 != 5) {
+            new_wave2 = 5;  // WT selected
+        }
         if (new_wave2 != ui->selected_wave2) {
             ui->selected_wave2 = new_wave2;
             synth_set_wave_type2(s, (WaveType)new_wave2);

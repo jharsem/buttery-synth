@@ -18,6 +18,9 @@ void synth_init(Synth *s) {
     s->unison_count = 1;    // No unison by default
     s->unison_spread = 20.0f; // 20 cents spread
 
+    s->wavetable_type = WT_BASIC;
+    s->wt_position = 0.0f;
+
     s->filter_cutoff = 0.7f;
     s->filter_resonance = 0.2f;
     s->filter_type = FILTER_LOWPASS;
@@ -110,6 +113,10 @@ void synth_note_on(Synth *s, int note, int velocity) {
     // Unison settings
     v->unison_count = s->unison_count;
     v->unison_spread = s->unison_spread;
+
+    // Wavetable settings
+    osc_set_wavetable(&v->osc, s->wavetable_type);
+    osc_set_wt_position(&v->osc, s->wt_position);
 
     voice_note_on(v, note, velocity);
 }
@@ -245,6 +252,25 @@ void synth_set_unison_spread(Synth *s, float spread) {
     // Update active voices
     for (int i = 0; i < NUM_VOICES; i++) {
         s->voices[i].unison_spread = spread;
+    }
+}
+
+void synth_set_wavetable(Synth *s, WavetableType type) {
+    if (type >= WT_COUNT) type = WT_BASIC;
+    s->wavetable_type = type;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        osc_set_wavetable(&s->voices[i].osc, type);
+    }
+}
+
+void synth_set_wt_position(Synth *s, float position) {
+    if (position < 0.0f) position = 0.0f;
+    if (position > 1.0f) position = 1.0f;
+    s->wt_position = position;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        osc_set_wt_position(&s->voices[i].osc, position);
     }
 }
 

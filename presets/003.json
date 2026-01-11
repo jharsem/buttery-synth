@@ -1,11 +1,18 @@
 {
-  "name": "SOFT PAD",
+  "name": "PWM Pad",
   "oscillator": {
-    "wave1": 0,
-    "wave2": 3,
+    "wave1": 1,
+    "wave2": 1,
     "mix": 0.5000,
     "detune": 8.0000,
-    "sub_mix": 0.0000
+    "sub_mix": 0.0000,
+    "pulse_width": 0.5000,
+    "pwm_rate": 0.3000,
+    "pwm_depth": 0.3500,
+    "unison_count": 3,
+    "unison_spread": 15.0000,
+    "wavetable_type": 0,
+    "wt_position": 0.0000
   },
   "filter": {
     "type": 0,

@@ -1,43 +1,50 @@
 {
-  "name": "DARK DRONE",
+  "name": "Harm Sweep",
   "oscillator": {
-    "wave1": 2,
+    "wave1": 5,
     "wave2": 0,
-    "mix": 0.6000,
-    "detune": -7.0000,
-    "sub_mix": 0.8000
+    "mix": 0.2000,
+    "detune": 0.0000,
+    "sub_mix": 0.3000,
+    "pulse_width": 0.5000,
+    "pwm_rate": 1.0000,
+    "pwm_depth": 0.0000,
+    "unison_count": 3,
+    "unison_spread": 15.0000,
+    "wavetable_type": 2,
+    "wt_position": 0.0000
   },
   "filter": {
     "type": 0,
-    "cutoff": 0.2000,
-    "resonance": 0.2000
+    "cutoff": 0.4000,
+    "resonance": 0.3000
   },
   "amp_env": {
-    "attack": 1.5000,
-    "decay": 0.5000,
-    "sustain": 0.9000,
-    "release": 2.0000
+    "attack": 0.3000,
+    "decay": 0.4000,
+    "sustain": 0.8000,
+    "release": 0.6000
   },
   "filter_env": {
-    "attack": 1.0000,
-    "decay": 1.0000,
-    "sustain": 0.3000,
-    "release": 1.5000,
-    "amount": 0.1500
+    "attack": 0.2000,
+    "decay": 0.5000,
+    "sustain": 0.4000,
+    "release": 0.4000,
+    "amount": 0.3000
   },
   "lfo": {
-    "type": 0,
-    "rate": 0.2000,
-    "depth": 0.1000
+    "type": 2,
+    "rate": 0.1000,
+    "depth": 0.1500
   },
   "effects": {
-    "delay_time": 0.5000,
-    "delay_feedback": 0.6000,
-    "delay_mix": 0.3000,
-    "reverb_mix": 0.7000,
-    "reverb_size": 0.9000,
-    "dist_drive": 1.5000,
-    "dist_mix": 0.1000
+    "delay_time": 0.4500,
+    "delay_feedback": 0.5000,
+    "delay_mix": 0.2500,
+    "reverb_mix": 0.4000,
+    "reverb_size": 0.7000,
+    "dist_drive": 1.0000,
+    "dist_mix": 0.0000
   },
-  "volume": 0.4000
+  "volume": 0.4500
 }

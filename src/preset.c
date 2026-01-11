@@ -51,7 +51,9 @@ int preset_save(const char *filepath, const char *name, Synth *s, Effects *fx) {
     fprintf(f, "    \"pwm_rate\": %.4f,\n", s->pwm_rate);
     fprintf(f, "    \"pwm_depth\": %.4f,\n", s->pwm_depth);
     fprintf(f, "    \"unison_count\": %d,\n", s->unison_count);
-    fprintf(f, "    \"unison_spread\": %.4f\n", s->unison_spread);
+    fprintf(f, "    \"unison_spread\": %.4f,\n", s->unison_spread);
+    fprintf(f, "    \"wavetable_type\": %d,\n", s->wavetable_type);
+    fprintf(f, "    \"wt_position\": %.4f\n", s->wt_position);
     fprintf(f, "  },\n");
 
     // Filter section
@@ -191,6 +193,8 @@ int preset_load(const char *filepath, char *name, int name_size, Synth *s, Effec
                     else if (strcmp(key, "pwm_depth") == 0) synth_set_pwm_depth(s, val);
                     else if (strcmp(key, "unison_count") == 0) synth_set_unison_count(s, (int)val);
                     else if (strcmp(key, "unison_spread") == 0) synth_set_unison_spread(s, val);
+                    else if (strcmp(key, "wavetable_type") == 0) synth_set_wavetable(s, (WavetableType)(int)val);
+                    else if (strcmp(key, "wt_position") == 0) synth_set_wt_position(s, val);
                 } else if (strcmp(section, "filter") == 0) {
                     if (strcmp(key, "type") == 0) s->filter_type = (FilterType)(int)val;
                     else if (strcmp(key, "cutoff") == 0) s->filter_cutoff = val;

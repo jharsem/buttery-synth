@@ -3,6 +3,7 @@
 #include "effects.h"
 #include "midi.h"
 #include "ui.h"
+#include "wavetable.h"
 #include <stdio.h>
 #include <pthread.h>
 
@@ -95,6 +96,9 @@ int main(void) {
 
     // Initialize audio
     InitAudioDevice();
+
+    // Initialize wavetables (must be before synth_init)
+    wavetables_init();
 
     // Initialize synth components BEFORE starting audio stream
     synth_init(&g_synth);

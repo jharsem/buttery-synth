@@ -12,6 +12,8 @@ void osc_init(Oscillator *osc) {
     osc->type = WAVE_SINE;
     osc->pulse_width = 0.5f;  // 50% duty cycle
     osc->noise_seed = 12345;
+    osc->wavetable = wavetable_get(WT_BASIC);
+    osc->wt_position = 0.0f;
 }
 
 void osc_set_frequency(Oscillator *osc, float freq) {
@@ -26,6 +28,16 @@ void osc_set_pulse_width(Oscillator *osc, float width) {
     if (width < 0.05f) width = 0.05f;  // Prevent silent extremes
     if (width > 0.95f) width = 0.95f;
     osc->pulse_width = width;
+}
+
+void osc_set_wavetable(Oscillator *osc, WavetableType type) {
+    osc->wavetable = wavetable_get(type);
+}
+
+void osc_set_wt_position(Oscillator *osc, float position) {
+    if (position < 0.0f) position = 0.0f;
+    if (position > 1.0f) position = 1.0f;
+    osc->wt_position = position;
 }
 
 // Simple noise generator (xorshift)
@@ -65,6 +77,12 @@ float osc_generate(Oscillator *osc) {
 
         case WAVE_NOISE:
             sample = generate_noise(&osc->noise_seed);
+            break;
+
+        case WAVE_WAVETABLE:
+            if (osc->wavetable) {
+                sample = wavetable_sample(osc->wavetable, osc->wt_position, phase);
+            }
             break;
     }
 

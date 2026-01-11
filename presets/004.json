@@ -1,16 +1,23 @@
 {
-  "name": "BRIGHT LEAD",
+  "name": "WT Lead",
   "oscillator": {
-    "wave1": 2,
+    "wave1": 5,
     "wave2": 2,
-    "mix": 0.4000,
-    "detune": 12.0000,
-    "sub_mix": 0.0000
+    "mix": 0.0000,
+    "detune": 0.0000,
+    "sub_mix": 0.2000,
+    "pulse_width": 0.5000,
+    "pwm_rate": 1.0000,
+    "pwm_depth": 0.0000,
+    "unison_count": 3,
+    "unison_spread": 20.0000,
+    "wavetable_type": 0,
+    "wt_position": 0.7000
   },
   "filter": {
     "type": 0,
     "cutoff": 0.7000,
-    "resonance": 0.4500
+    "resonance": 0.3000
   },
   "amp_env": {
     "attack": 0.0100,

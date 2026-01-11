@@ -24,6 +24,10 @@ typedef struct {
     int unison_count;       // 1-7 voices
     float unison_spread;    // Detune spread in cents (0-100)
 
+    // Wavetable
+    WavetableType wavetable_type;   // Current wavetable
+    float wt_position;              // Position within wavetable (0-1)
+
     float filter_cutoff;
     float filter_resonance;
     FilterType filter_type;
@@ -67,6 +71,8 @@ void synth_set_pwm_rate(Synth *s, float rate);
 void synth_set_pwm_depth(Synth *s, float depth);
 void synth_set_unison_count(Synth *s, int count);
 void synth_set_unison_spread(Synth *s, float spread);
+void synth_set_wavetable(Synth *s, WavetableType type);
+void synth_set_wt_position(Synth *s, float position);
 void synth_set_filter(Synth *s, float cutoff, float resonance, FilterType type);
 void synth_set_adsr(Synth *s, float a, float d, float s_level, float r);
 void synth_set_filter_env_adsr(Synth *s, float a, float d, float sus, float r);

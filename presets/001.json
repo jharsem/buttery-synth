@@ -5,7 +5,14 @@
     "wave2": 1,
     "mix": 0.0000,
     "detune": 0.0000,
-    "sub_mix": 0.0000
+    "sub_mix": 0.0000,
+    "pulse_width": 0.5000,
+    "pwm_rate": 1.0000,
+    "pwm_depth": 0.0000,
+    "unison_count": 1,
+    "unison_spread": 20.0000,
+    "wavetable_type": 0,
+    "wt_position": 0.0000
   },
   "filter": {
     "type": 0,
