@@ -1,0 +1,11 @@
+# Build artifacts
+build/
+*.o
+
+# Binary
+buttersynth
+
+# Editor files
+*.swp
+*~
+.vscode/
