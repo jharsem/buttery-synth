@@ -74,12 +74,15 @@ static const char *WAVE_NAMES[] = {"SIN", "SQR", "SAW", "TRI", "NSE", "WT"};
 static const char *FILTER_NAMES[] = {"LP", "HP", "BP"};
 static const char *WT_NAMES[] = {"Basic", "PWM", "Harm", "Fmt"};
 static const char *LFO_NAMES[] = {"SIN", "TRI", "SAW", "SQR"};
-static const char *PAGE_NAMES[] = {"OSC", "FLT", "FX", "MOD", "PRE", "SET"};
+static const char *PAGE_NAMES[] = {"OSC", "FLT", "FX", "MOD", "ARP", "PRE", "SET"};
+static const char *ARP_PATTERN_NAMES[] = {"Up", "Down", "UpDn", "Rand", "Play"};
+static const char *ARP_DIV_NAMES[] = {"1/4", "1/8", "1/16", "1/32"};
 static const char *BUFFER_NAMES[] = {"512", "256", "128"};
 
-void ui_init(UI *ui, Synth *synth, Effects *effects) {
+void ui_init(UI *ui, Synth *synth, Effects *effects, Arpeggiator *arp) {
     ui->synth = synth;
     ui->effects = effects;
+    ui->arp = arp;
     ui->current_page = 0;
     ui->selected_wave = synth->wave_type;
     ui->selected_wave2 = synth->wave_type2;
@@ -192,10 +195,10 @@ void ui_draw(UI *ui) {
     ClearBackground(BG_COLOR);
 
     // Page tabs at top
-    int tab_width = 55;
+    int tab_width = 48;
     int tab_height = 30;
     int tab_y = 5;
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 7; i++) {
         Rectangle tab = {PANEL_MARGIN + i * (tab_width + 5), tab_y, tab_width, tab_height};
         Color tab_color = (i == ui->current_page) ? SLIDER_FG : SLIDER_BG;
         DrawRectangleRec(tab, tab_color);
@@ -420,6 +423,91 @@ void ui_draw(UI *ui) {
         DrawText("(Square waves)", panel_x + 10, panel_y + 120, 12, TEXT_COLOR);
 
     } else if (ui->current_page == 4) {
+        // ARP PAGE: Arpeggiator controls
+        Arpeggiator *arp = ui->arp;
+
+        DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 60, content_height, PANEL_COLOR);
+        DrawText("ARPEGGIATOR", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+
+        // On/Off toggle
+        Rectangle on_btn = {panel_x + 20, panel_y + 30, 60, 28};
+        Rectangle off_btn = {panel_x + 85, panel_y + 30, 60, 28};
+
+        DrawRectangleRec(on_btn, arp->enabled ? SLIDER_FG : SLIDER_BG);
+        DrawText("ON", on_btn.x + 20, on_btn.y + 6, 14, arp->enabled ? BG_COLOR : TEXT_COLOR);
+
+        DrawRectangleRec(off_btn, !arp->enabled ? SLIDER_FG : SLIDER_BG);
+        DrawText("OFF", off_btn.x + 16, off_btn.y + 6, 14, !arp->enabled ? BG_COLOR : TEXT_COLOR);
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            Vector2 mouse = GetTransformedTouch();
+            if (CheckCollisionPointRec(mouse, on_btn)) arp->enabled = 1;
+            if (CheckCollisionPointRec(mouse, off_btn)) {
+                arp->enabled = 0;
+                arp_clear(arp);
+            }
+        }
+
+        // Pattern selector
+        int new_pattern = draw_button_row("Ptrn", ARP_PATTERN_NAMES, 5, (int)arp->pattern,
+                                          panel_x + 10, panel_y + 65);
+        if (new_pattern != (int)arp->pattern) {
+            arp->pattern = (ArpPattern)new_pattern;
+        }
+
+        // Division selector
+        int new_div = draw_button_row("Div", ARP_DIV_NAMES, 4, (int)arp->division,
+                                      panel_x + 10, panel_y + 95);
+        if (new_div != (int)arp->division) {
+            arp->division = (ArpDivision)new_div;
+        }
+
+        // Tempo/Octaves/Gate panel
+        panel_x += PANEL_WIDTH + 60 + PANEL_MARGIN;
+        DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 60, content_height, PANEL_COLOR);
+        DrawText("TIMING", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+
+        // Tempo slider (40-240 BPM)
+        float new_tempo = draw_slider("BPM", arp->tempo, 40.0f, 240.0f,
+                                      panel_x + 10, panel_y + 30, CTRL_NONE, ui);
+        if (new_tempo != arp->tempo) {
+            arp->tempo = new_tempo;
+        }
+
+        // Octaves slider (1-4)
+        float oct_val = draw_slider("Oct", (float)arp->octaves, 1.0f, 4.0f,
+                                    panel_x + 10, panel_y + 60, CTRL_NONE, ui);
+        int new_oct = (int)(oct_val + 0.5f);
+        if (new_oct != arp->octaves) {
+            arp->octaves = new_oct;
+        }
+
+        // Gate slider (0.1-1.0)
+        float new_gate = draw_slider("Gate", arp->gate, 0.1f, 1.0f,
+                                     panel_x + 10, panel_y + 90, CTRL_NONE, ui);
+        if (new_gate != arp->gate) {
+            arp->gate = new_gate;
+        }
+
+        // Status display
+        panel_x += PANEL_WIDTH + 60 + PANEL_MARGIN;
+        DrawRectangle(panel_x, panel_y, PANEL_WIDTH, content_height, PANEL_COLOR);
+        DrawText("STATUS", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+
+        char status_str[64];
+        snprintf(status_str, sizeof(status_str), "Notes held: %d", arp->note_count);
+        DrawText(status_str, panel_x + 20, panel_y + 35, 14, TEXT_COLOR);
+
+        if (arp->enabled) {
+            DrawText("Arp ACTIVE", panel_x + 20, panel_y + 60, 14, WAVE_COLOR);
+            snprintf(status_str, sizeof(status_str), "Step: %d/%d",
+                     arp->current_step + 1, arp->note_count > 0 ? arp->note_count : 1);
+            DrawText(status_str, panel_x + 20, panel_y + 85, 14, TEXT_COLOR);
+        } else {
+            DrawText("Arp OFF", panel_x + 20, panel_y + 60, 14, TEXT_COLOR);
+        }
+
+    } else if (ui->current_page == 5) {
         // PRESET PAGE
         DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 150, content_height, PANEL_COLOR);
         DrawText("PRESETS", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
@@ -504,7 +592,7 @@ void ui_draw(UI *ui) {
             if (CheckCollisionPointRec(mouse, load_btn) && exists) {
                 char path[64];
                 preset_filename(ui->current_preset, path, sizeof(path));
-                if (preset_load(path, ui->preset_name, sizeof(ui->preset_name), s, fx) == 0) {
+                if (preset_load(path, ui->preset_name, sizeof(ui->preset_name), s, fx, ui->arp) == 0) {
                     ui->selected_wave = s->wave_type;
                     ui->selected_wave2 = s->wave_type2;
                     ui->selected_filter = s->filter_type;
@@ -517,7 +605,7 @@ void ui_draw(UI *ui) {
                 if (ui->preset_name[0] == '\0') {
                     snprintf(ui->preset_name, sizeof(ui->preset_name), "Preset %03d", ui->current_preset);
                 }
-                preset_save(path, ui->preset_name, s, fx);
+                preset_save(path, ui->preset_name, s, fx, ui->arp);
                 last_preset = -1;
             }
         }
@@ -616,7 +704,7 @@ void ui_draw(UI *ui) {
             }
         }
 
-    } else {
+    } else if (ui->current_page == 6) {
         // SETTINGS PAGE
         DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 100, content_height, PANEL_COLOR);
         DrawText("SETTINGS", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);

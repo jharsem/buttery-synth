@@ -3,6 +3,7 @@
 
 #include "synth.h"
 #include "effects.h"
+#include "arp.h"
 #include "raylib.h"
 #include <stdbool.h>
 
@@ -11,9 +12,10 @@
 #define SCREEN_HEIGHT 400
 
 typedef struct {
-    // Pointers to synth and effects for parameter control
+    // Pointers to synth, effects, and arp for parameter control
     Synth *synth;
     Effects *effects;
+    Arpeggiator *arp;
 
     // UI state
     int current_page;       // 0 = OSC, 1 = FLT, 2 = FX, 3 = MOD, 4 = PRESET
@@ -42,7 +44,7 @@ typedef struct {
     bool was_touching;      // Was touching last frame
 } UI;
 
-void ui_init(UI *ui, Synth *synth, Effects *effects);
+void ui_init(UI *ui, Synth *synth, Effects *effects, Arpeggiator *arp);
 void ui_update(UI *ui);
 void ui_draw(UI *ui);
 

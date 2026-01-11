@@ -4,6 +4,7 @@
 #include "midi.h"
 #include "ui.h"
 #include "wavetable.h"
+#include "arp.h"
 #include <stdio.h>
 #include <pthread.h>
 
@@ -15,6 +16,7 @@
 static Synth g_synth;
 static Effects g_effects;
 static UI g_ui;
+static Arpeggiator g_arp;
 static pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 static AudioStream g_stream;
 static const int BUFFER_SIZES[] = {512, 256, 128};
@@ -103,9 +105,10 @@ int main(void) {
     // Initialize synth components BEFORE starting audio stream
     synth_init(&g_synth);
     effects_init(&g_effects);
+    arp_init(&g_arp);
 
-    // Initialize UI (needs synth/effects pointers)
-    ui_init(&g_ui, &g_synth, &g_effects);
+    // Initialize UI (needs synth/effects/arp pointers)
+    ui_init(&g_ui, &g_synth, &g_effects, &g_arp);
 
     // Create audio stream with initial buffer size from UI
     SetAudioStreamBufferSizeDefault(BUFFER_SIZES[g_ui.buffer_size]);
@@ -138,14 +141,26 @@ int main(void) {
                 switch (event.type) {
                     case MIDI_NOTE_ON:
                         if (event.data2 > 0) {
-                            synth_note_on(&g_synth, event.data1, event.data2);
+                            if (g_arp.enabled) {
+                                arp_note_on(&g_arp, event.data1, event.data2);
+                            } else {
+                                synth_note_on(&g_synth, event.data1, event.data2);
+                            }
                         } else {
-                            synth_note_off(&g_synth, event.data1);
+                            if (g_arp.enabled) {
+                                arp_note_off(&g_arp, event.data1);
+                            } else {
+                                synth_note_off(&g_synth, event.data1);
+                            }
                         }
                         break;
 
                     case MIDI_NOTE_OFF:
-                        synth_note_off(&g_synth, event.data1);
+                        if (g_arp.enabled) {
+                            arp_note_off(&g_arp, event.data1);
+                        } else {
+                            synth_note_off(&g_synth, event.data1);
+                        }
                         break;
 
                     case MIDI_CONTROL:
@@ -156,6 +171,20 @@ int main(void) {
                 pthread_mutex_unlock(&g_mutex);
             }
         }
+
+        // Process arpeggiator
+        pthread_mutex_lock(&g_mutex);
+        float delta = GetFrameTime();
+        int arp_note, arp_vel;
+        int arp_event = arp_process(&g_arp, delta, &arp_note, &arp_vel);
+        if (arp_event == 1) {
+            // Note on
+            synth_note_on(&g_synth, arp_note, arp_vel);
+        } else if (arp_event == -1) {
+            // Note off
+            synth_note_off(&g_synth, arp_note);
+        }
+        pthread_mutex_unlock(&g_mutex);
 
         // Update UI (handles touch input)
         pthread_mutex_lock(&g_mutex);

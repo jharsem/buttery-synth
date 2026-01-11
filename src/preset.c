@@ -27,7 +27,7 @@ static void write_json_string(FILE *f, const char *key, const char *value) {
     fprintf(f, "\"");
 }
 
-int preset_save(const char *filepath, const char *name, Synth *s, Effects *fx) {
+int preset_save(const char *filepath, const char *name, Synth *s, Effects *fx, Arpeggiator *arp) {
     // Ensure presets directory exists
     mkdir(PRESET_DIR, 0755);
 
@@ -54,6 +54,16 @@ int preset_save(const char *filepath, const char *name, Synth *s, Effects *fx) {
     fprintf(f, "    \"unison_spread\": %.4f,\n", s->unison_spread);
     fprintf(f, "    \"wavetable_type\": %d,\n", s->wavetable_type);
     fprintf(f, "    \"wt_position\": %.4f\n", s->wt_position);
+    fprintf(f, "  },\n");
+
+    // Arpeggiator section
+    fprintf(f, "  \"arpeggiator\": {\n");
+    fprintf(f, "    \"enabled\": %d,\n", arp->enabled);
+    fprintf(f, "    \"pattern\": %d,\n", arp->pattern);
+    fprintf(f, "    \"division\": %d,\n", arp->division);
+    fprintf(f, "    \"tempo\": %.4f,\n", arp->tempo);
+    fprintf(f, "    \"octaves\": %d,\n", arp->octaves);
+    fprintf(f, "    \"gate\": %.4f\n", arp->gate);
     fprintf(f, "  },\n");
 
     // Filter section
@@ -140,7 +150,7 @@ static int read_int(FILE *f) {
     return val;
 }
 
-int preset_load(const char *filepath, char *name, int name_size, Synth *s, Effects *fx) {
+int preset_load(const char *filepath, char *name, int name_size, Synth *s, Effects *fx, Arpeggiator *arp) {
     FILE *f = fopen(filepath, "r");
     if (!f) return -1;
 
@@ -218,6 +228,13 @@ int preset_load(const char *filepath, char *name, int name_size, Synth *s, Effec
                     if (strcmp(key, "type") == 0) synth_set_lfo_type(s, (LFOWaveType)(int)val);
                     else if (strcmp(key, "rate") == 0) synth_set_lfo_rate(s, val);
                     else if (strcmp(key, "depth") == 0) synth_set_lfo_depth(s, val);
+                } else if (strcmp(section, "arpeggiator") == 0) {
+                    if (strcmp(key, "enabled") == 0) arp->enabled = (int)val;
+                    else if (strcmp(key, "pattern") == 0) arp->pattern = (ArpPattern)(int)val;
+                    else if (strcmp(key, "division") == 0) arp->division = (ArpDivision)(int)val;
+                    else if (strcmp(key, "tempo") == 0) arp->tempo = val;
+                    else if (strcmp(key, "octaves") == 0) arp->octaves = (int)val;
+                    else if (strcmp(key, "gate") == 0) arp->gate = val;
                 } else if (strcmp(section, "effects") == 0) {
                     if (strcmp(key, "delay_time") == 0) fx->delay.time = val;
                     else if (strcmp(key, "delay_feedback") == 0) fx->delay.feedback = val;
