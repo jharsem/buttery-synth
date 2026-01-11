@@ -16,10 +16,14 @@ typedef struct {
     Effects *effects;
 
     // UI state
-    int current_page;       // 0 = OSC, 1 = FILTER/ENV, 2 = EFFECTS
+    int current_page;       // 0 = OSC, 1 = FLT, 2 = FX, 3 = MOD, 4 = PRESET
     int selected_wave;
     int selected_wave2;
     int selected_filter;
+    int selected_lfo;
+    int current_preset;     // 1-99
+    char preset_name[32];   // Current preset name
+    bool editing_name;      // True when editing preset name
 
     // Waveform display buffer
     float waveform_buffer[256];

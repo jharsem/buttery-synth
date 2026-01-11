@@ -1,0 +1,43 @@
+{
+  "name": "DARK DRONE",
+  "oscillator": {
+    "wave1": 2,
+    "wave2": 0,
+    "mix": 0.6000,
+    "detune": -7.0000,
+    "sub_mix": 0.8000
+  },
+  "filter": {
+    "type": 0,
+    "cutoff": 0.2000,
+    "resonance": 0.2000
+  },
+  "amp_env": {
+    "attack": 1.5000,
+    "decay": 0.5000,
+    "sustain": 0.9000,
+    "release": 2.0000
+  },
+  "filter_env": {
+    "attack": 1.0000,
+    "decay": 1.0000,
+    "sustain": 0.3000,
+    "release": 1.5000,
+    "amount": 0.1500
+  },
+  "lfo": {
+    "type": 0,
+    "rate": 0.2000,
+    "depth": 0.1000
+  },
+  "effects": {
+    "delay_time": 0.5000,
+    "delay_feedback": 0.6000,
+    "delay_mix": 0.3000,
+    "reverb_mix": 0.7000,
+    "reverb_size": 0.9000,
+    "dist_drive": 1.5000,
+    "dist_mix": 0.1000
+  },
+  "volume": 0.4000
+}

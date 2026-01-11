@@ -1,0 +1,43 @@
+{
+  "name": "SOFT PAD",
+  "oscillator": {
+    "wave1": 0,
+    "wave2": 3,
+    "mix": 0.5000,
+    "detune": 8.0000,
+    "sub_mix": 0.0000
+  },
+  "filter": {
+    "type": 0,
+    "cutoff": 0.5000,
+    "resonance": 0.1000
+  },
+  "amp_env": {
+    "attack": 0.8000,
+    "decay": 0.5000,
+    "sustain": 0.7000,
+    "release": 1.2000
+  },
+  "filter_env": {
+    "attack": 0.5000,
+    "decay": 0.8000,
+    "sustain": 0.3000,
+    "release": 0.8000,
+    "amount": 0.2000
+  },
+  "lfo": {
+    "type": 0,
+    "rate": 0.5000,
+    "depth": 0.0500
+  },
+  "effects": {
+    "delay_time": 0.4000,
+    "delay_feedback": 0.4000,
+    "delay_mix": 0.2000,
+    "reverb_mix": 0.5000,
+    "reverb_size": 0.7000,
+    "dist_drive": 1.0000,
+    "dist_mix": 0.0000
+  },
+  "volume": 0.4500
+}

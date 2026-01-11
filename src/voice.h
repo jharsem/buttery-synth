@@ -4,14 +4,21 @@
 #include "oscillator.h"
 #include "envelope.h"
 #include "filter.h"
+#include "lfo.h"
 
 typedef struct {
     Oscillator osc;
     Oscillator osc2;    // Second oscillator for mixing
+    Oscillator sub_osc; // Sub-oscillator (octave down)
     float osc_mix;      // 0.0 = osc1 only, 1.0 = osc2 only, 0.5 = equal mix
     float osc2_detune;  // Detune in cents (-100 to +100)
+    float sub_osc_mix;  // 0.0 = no sub, 1.0 = full sub
     Envelope env;
+    Envelope filter_env;        // Filter envelope
+    float filter_env_amount;    // Filter env depth (-1.0 to +1.0)
+    LFO filter_lfo;             // LFO for filter modulation
     SVFilter filter;
+    float base_filter_cutoff;   // Original cutoff before modulation
 
     int note;           // MIDI note number (-1 = inactive)
     int velocity;       // MIDI velocity (0-127)

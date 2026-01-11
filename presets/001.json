@@ -1,0 +1,43 @@
+{
+  "name": "INIT",
+  "oscillator": {
+    "wave1": 2,
+    "wave2": 1,
+    "mix": 0.0000,
+    "detune": 0.0000,
+    "sub_mix": 0.0000
+  },
+  "filter": {
+    "type": 0,
+    "cutoff": 1.0000,
+    "resonance": 0.0000
+  },
+  "amp_env": {
+    "attack": 0.0100,
+    "decay": 0.1000,
+    "sustain": 1.0000,
+    "release": 0.3000
+  },
+  "filter_env": {
+    "attack": 0.0100,
+    "decay": 0.2000,
+    "sustain": 0.0000,
+    "release": 0.2000,
+    "amount": 0.0000
+  },
+  "lfo": {
+    "type": 0,
+    "rate": 2.0000,
+    "depth": 0.0000
+  },
+  "effects": {
+    "delay_time": 0.3000,
+    "delay_feedback": 0.4000,
+    "delay_mix": 0.0000,
+    "reverb_mix": 0.0000,
+    "reverb_size": 0.5000,
+    "dist_drive": 1.0000,
+    "dist_mix": 0.0000
+  },
+  "volume": 0.5000
+}

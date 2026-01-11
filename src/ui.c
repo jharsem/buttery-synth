@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "preset.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -44,6 +45,7 @@ enum {
     CTRL_WAVE_TYPE2,
     CTRL_OSC_MIX,
     CTRL_OSC2_DETUNE,
+    CTRL_SUB_OSC_MIX,
     CTRL_FILTER_TYPE,
     CTRL_FILTER_CUTOFF,
     CTRL_FILTER_RESO,
@@ -57,12 +59,16 @@ enum {
     CTRL_REVERB_MIX,
     CTRL_DIST_DRIVE,
     CTRL_DIST_MIX,
-    CTRL_VOLUME
+    CTRL_VOLUME,
+    CTRL_LFO_RATE,
+    CTRL_LFO_DEPTH,
+    CTRL_FILT_ENV_AMT
 };
 
 static const char *WAVE_NAMES[] = {"SIN", "SQR", "SAW", "TRI", "NSE"};
 static const char *FILTER_NAMES[] = {"LP", "HP", "BP"};
-static const char *PAGE_NAMES[] = {"OSC", "FLT", "FX"};
+static const char *LFO_NAMES[] = {"SIN", "TRI", "SAW", "SQR"};
+static const char *PAGE_NAMES[] = {"OSC", "FLT", "FX", "MOD", "PRE"};
 
 void ui_init(UI *ui, Synth *synth, Effects *effects) {
     ui->synth = synth;
@@ -71,6 +77,10 @@ void ui_init(UI *ui, Synth *synth, Effects *effects) {
     ui->selected_wave = synth->wave_type;
     ui->selected_wave2 = synth->wave_type2;
     ui->selected_filter = synth->filter_type;
+    ui->selected_lfo = synth->lfo_type;
+    ui->current_preset = 1;
+    strcpy(ui->preset_name, "Init");
+    ui->editing_name = false;
     ui->active_control = CTRL_NONE;
     ui->waveform_pos = 0;
     ui->last_touch_x = 0;
@@ -172,10 +182,10 @@ void ui_draw(UI *ui) {
     ClearBackground(BG_COLOR);
 
     // Page tabs at top
-    int tab_width = 80;
+    int tab_width = 60;
     int tab_height = 30;
     int tab_y = 5;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 5; i++) {
         Rectangle tab = {PANEL_MARGIN + i * (tab_width + 5), tab_y, tab_width, tab_height};
         Color tab_color = (i == ui->current_page) ? SLIDER_FG : SLIDER_BG;
         DrawRectangleRec(tab, tab_color);
@@ -231,8 +241,13 @@ void ui_draw(UI *ui) {
         if (new_detune != s->osc2_detune) {
             synth_set_osc2_detune(s, new_detune);
         }
+        float new_sub = draw_slider("Sub", s->sub_osc_mix, 0.0f, 1.0f,
+                                    panel_x + 10, panel_y + 90, CTRL_SUB_OSC_MIX, ui);
+        if (new_sub != s->sub_osc_mix) {
+            synth_set_sub_osc_mix(s, new_sub);
+        }
         s->volume = draw_slider("Vol", s->volume, 0.0f, 1.0f,
-                                panel_x + 10, panel_y + 90, CTRL_VOLUME, ui);
+                                panel_x + 10, panel_y + 120, CTRL_VOLUME, ui);
 
     } else if (ui->current_page == 1) {
         // FILTER PAGE: Filter + Envelope
@@ -269,7 +284,7 @@ void ui_draw(UI *ui) {
             synth_set_adsr(s, new_a, new_d, new_sus, new_r);
         }
 
-    } else {
+    } else if (ui->current_page == 2) {
         // FX PAGE: Effects
         DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 40, content_height, PANEL_COLOR);
         DrawText("DELAY", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
@@ -291,6 +306,234 @@ void ui_draw(UI *ui) {
                                          panel_x + 10, panel_y + 30, CTRL_DIST_MIX, ui);
         fx->distortion.drive = draw_slider("Drv", fx->distortion.drive, 1.0f, 10.0f,
                                            panel_x + 10, panel_y + 60, CTRL_DIST_DRIVE, ui);
+
+    } else if (ui->current_page == 3) {
+        // MOD PAGE: LFO + Filter Envelope
+        DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 60, content_height, PANEL_COLOR);
+        DrawText("LFO", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+        int new_lfo = draw_button_row("Wave", LFO_NAMES, 4, ui->selected_lfo,
+                                      panel_x + 10, panel_y + 25);
+        if (new_lfo != ui->selected_lfo) {
+            ui->selected_lfo = new_lfo;
+            synth_set_lfo_type(s, (LFOWaveType)new_lfo);
+        }
+        float new_rate = draw_slider("Rate", s->lfo_rate, 0.1f, 20.0f,
+                                     panel_x + 10, panel_y + 55, CTRL_LFO_RATE, ui);
+        if (new_rate != s->lfo_rate) {
+            synth_set_lfo_rate(s, new_rate);
+        }
+        float new_depth = draw_slider("Depth", s->lfo_depth, 0.0f, 1.0f,
+                                      panel_x + 10, panel_y + 85, CTRL_LFO_DEPTH, ui);
+        if (new_depth != s->lfo_depth) {
+            synth_set_lfo_depth(s, new_depth);
+        }
+
+        panel_x += PANEL_WIDTH + 60 + PANEL_MARGIN;
+        DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 60, content_height, PANEL_COLOR);
+        DrawText("FILTER ENV", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+        float new_amt = draw_slider("Amt", s->filter_env_amount, -1.0f, 1.0f,
+                                    panel_x + 10, panel_y + 30, CTRL_FILT_ENV_AMT, ui);
+        if (new_amt != s->filter_env_amount) {
+            synth_set_filter_env_amount(s, new_amt);
+        }
+        DrawText("(Uses Amp ADSR)", panel_x + 10, panel_y + 60, 12, TEXT_COLOR);
+
+    } else {
+        // PRESET PAGE
+        DrawRectangle(panel_x, panel_y, PANEL_WIDTH + 150, content_height, PANEL_COLOR);
+        DrawText("PRESETS", panel_x + 10, panel_y + 5, 16, TEXT_COLOR);
+
+        // Preset number display with navigation
+        char preset_str[16];
+        snprintf(preset_str, sizeof(preset_str), "%03d", ui->current_preset);
+
+        int nav_y = panel_y + 35;
+        int btn_size = 36;
+
+        // Previous button
+        Rectangle prev_btn = {panel_x + 20, nav_y, btn_size, btn_size};
+        DrawRectangleRec(prev_btn, SLIDER_BG);
+        DrawText("<", prev_btn.x + 12, prev_btn.y + 8, 20, TEXT_COLOR);
+
+        // Preset number
+        DrawText(preset_str, panel_x + 70, nav_y + 6, 24, SLIDER_FG);
+
+        // Next button
+        Rectangle next_btn = {panel_x + 130, nav_y, btn_size, btn_size};
+        DrawRectangleRec(next_btn, SLIDER_BG);
+        DrawText(">", next_btn.x + 12, next_btn.y + 8, 20, TEXT_COLOR);
+
+        // Check if preset exists and get name
+        int exists = preset_exists(ui->current_preset);
+        static int last_preset = -1;
+        if (ui->current_preset != last_preset && !ui->editing_name) {
+            last_preset = ui->current_preset;
+            if (exists) {
+                preset_get_name(ui->current_preset, ui->preset_name, sizeof(ui->preset_name));
+            } else {
+                snprintf(ui->preset_name, sizeof(ui->preset_name), "Preset %03d", ui->current_preset);
+            }
+        }
+
+        // Display preset name (tappable for editing)
+        Rectangle name_rect = {panel_x + 175, nav_y, 200, 30};
+        DrawRectangleRec(name_rect, ui->editing_name ? SLIDER_BG : PANEL_COLOR);
+        DrawRectangleLinesEx(name_rect, 1, ui->editing_name ? SLIDER_FG : SLIDER_BG);
+        DrawText(ui->preset_name, panel_x + 180, nav_y + 6, 18,
+                 ui->editing_name ? SLIDER_FG : (exists ? WAVE_COLOR : TEXT_COLOR));
+        if (!ui->editing_name) {
+            DrawText("[edit]", panel_x + 380, nav_y + 10, 12, TEXT_COLOR);
+        }
+
+        // Touch handling for navigation and name editing
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !ui->editing_name) {
+            Vector2 mouse = GetTransformedTouch();
+            if (CheckCollisionPointRec(mouse, prev_btn)) {
+                ui->current_preset--;
+                if (ui->current_preset < 1) ui->current_preset = MAX_PRESETS;
+                last_preset = -1;
+            }
+            if (CheckCollisionPointRec(mouse, next_btn)) {
+                ui->current_preset++;
+                if (ui->current_preset > MAX_PRESETS) ui->current_preset = 1;
+                last_preset = -1;
+            }
+            if (CheckCollisionPointRec(mouse, name_rect)) {
+                ui->editing_name = true;
+            }
+        }
+
+        // Load/Save buttons
+        int action_y = panel_y + 85;
+        Rectangle load_btn = {panel_x + 20, action_y, 80, 35};
+        Rectangle save_btn = {panel_x + 110, action_y, 80, 35};
+
+        Color load_color = exists ? SLIDER_FG : SLIDER_BG;
+
+        DrawRectangleRec(load_btn, load_color);
+        DrawText("LOAD", load_btn.x + 18, load_btn.y + 10, 14,
+                 exists ? BG_COLOR : TEXT_COLOR);
+
+        DrawRectangleRec(save_btn, SLIDER_FG);
+        DrawText("SAVE", save_btn.x + 18, save_btn.y + 10, 14, BG_COLOR);
+
+        // Touch handling for load/save
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && !ui->editing_name) {
+            Vector2 mouse = GetTransformedTouch();
+            if (CheckCollisionPointRec(mouse, load_btn) && exists) {
+                char path[64];
+                preset_filename(ui->current_preset, path, sizeof(path));
+                if (preset_load(path, ui->preset_name, sizeof(ui->preset_name), s, fx) == 0) {
+                    ui->selected_wave = s->wave_type;
+                    ui->selected_wave2 = s->wave_type2;
+                    ui->selected_filter = s->filter_type;
+                    ui->selected_lfo = s->lfo_type;
+                }
+            }
+            if (CheckCollisionPointRec(mouse, save_btn)) {
+                char path[64];
+                preset_filename(ui->current_preset, path, sizeof(path));
+                if (ui->preset_name[0] == '\0') {
+                    snprintf(ui->preset_name, sizeof(ui->preset_name), "Preset %03d", ui->current_preset);
+                }
+                preset_save(path, ui->preset_name, s, fx);
+                last_preset = -1;
+            }
+        }
+
+        // Status text
+        if (!ui->editing_name) {
+            if (exists) {
+                DrawText("Tap LOAD to recall", panel_x + 20, panel_y + 135, 12, TEXT_COLOR);
+            } else {
+                DrawText("Empty - tap SAVE", panel_x + 20, panel_y + 135, 12, TEXT_COLOR);
+            }
+        }
+
+        // On-screen keyboard when editing name
+        if (ui->editing_name) {
+            int kb_x = panel_x + PANEL_WIDTH + 180;
+            int kb_y = panel_y + 10;
+            int key_w = 32;
+            int key_h = 28;
+            int key_gap = 3;
+
+            DrawRectangle(kb_x - 10, kb_y - 5, 380, 175, (Color){35, 35, 50, 255});
+            DrawText("EDIT NAME", kb_x, kb_y, 14, SLIDER_FG);
+            kb_y += 20;
+
+            // Keyboard rows
+            const char *rows[] = {
+                "QWERTYUIOP",
+                "ASDFGHJKL",
+                "ZXCVBNM",
+                "0123456789"
+            };
+            int row_offsets[] = {0, 15, 30, 0};
+
+            for (int row = 0; row < 4; row++) {
+                int rx = kb_x + row_offsets[row];
+                for (int col = 0; rows[row][col]; col++) {
+                    Rectangle key = {rx + col * (key_w + key_gap), kb_y + row * (key_h + key_gap), key_w, key_h};
+                    DrawRectangleRec(key, SLIDER_BG);
+                    char ch[2] = {rows[row][col], 0};
+                    DrawText(ch, key.x + 11, key.y + 6, 16, TEXT_COLOR);
+
+                    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                        Vector2 mouse = GetTransformedTouch();
+                        if (CheckCollisionPointRec(mouse, key)) {
+                            int len = strlen(ui->preset_name);
+                            if (len < 20) {
+                                ui->preset_name[len] = rows[row][col];
+                                ui->preset_name[len + 1] = '\0';
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Space, Backspace, Done buttons
+            int btn_y = kb_y + 4 * (key_h + key_gap);
+
+            Rectangle space_btn = {kb_x, btn_y, 100, key_h};
+            DrawRectangleRec(space_btn, SLIDER_BG);
+            DrawText("SPACE", space_btn.x + 25, space_btn.y + 6, 14, TEXT_COLOR);
+
+            Rectangle back_btn = {kb_x + 110, btn_y, 80, key_h};
+            DrawRectangleRec(back_btn, SLIDER_BG);
+            DrawText("<DEL", back_btn.x + 18, back_btn.y + 6, 14, TEXT_COLOR);
+
+            Rectangle done_btn = {kb_x + 200, btn_y, 80, key_h};
+            DrawRectangleRec(done_btn, SLIDER_FG);
+            DrawText("DONE", done_btn.x + 18, done_btn.y + 6, 14, BG_COLOR);
+
+            Rectangle clear_btn = {kb_x + 290, btn_y, 70, key_h};
+            DrawRectangleRec(clear_btn, SLIDER_BG);
+            DrawText("CLR", clear_btn.x + 18, clear_btn.y + 6, 14, TEXT_COLOR);
+
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                Vector2 mouse = GetTransformedTouch();
+                if (CheckCollisionPointRec(mouse, space_btn)) {
+                    int len = strlen(ui->preset_name);
+                    if (len < 20) {
+                        ui->preset_name[len] = ' ';
+                        ui->preset_name[len + 1] = '\0';
+                    }
+                }
+                if (CheckCollisionPointRec(mouse, back_btn)) {
+                    int len = strlen(ui->preset_name);
+                    if (len > 0) {
+                        ui->preset_name[len - 1] = '\0';
+                    }
+                }
+                if (CheckCollisionPointRec(mouse, done_btn)) {
+                    ui->editing_name = false;
+                }
+                if (CheckCollisionPointRec(mouse, clear_btn)) {
+                    ui->preset_name[0] = '\0';
+                }
+            }
+        }
     }
 
     // Waveform display (bottom area)

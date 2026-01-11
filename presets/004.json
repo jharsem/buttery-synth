@@ -1,0 +1,43 @@
+{
+  "name": "BRIGHT LEAD",
+  "oscillator": {
+    "wave1": 2,
+    "wave2": 2,
+    "mix": 0.4000,
+    "detune": 12.0000,
+    "sub_mix": 0.0000
+  },
+  "filter": {
+    "type": 0,
+    "cutoff": 0.7000,
+    "resonance": 0.4500
+  },
+  "amp_env": {
+    "attack": 0.0100,
+    "decay": 0.1500,
+    "sustain": 0.6000,
+    "release": 0.2500
+  },
+  "filter_env": {
+    "attack": 0.0100,
+    "decay": 0.2000,
+    "sustain": 0.4000,
+    "release": 0.2000,
+    "amount": 0.3000
+  },
+  "lfo": {
+    "type": 0,
+    "rate": 5.0000,
+    "depth": 0.0800
+  },
+  "effects": {
+    "delay_time": 0.3500,
+    "delay_feedback": 0.3500,
+    "delay_mix": 0.2500,
+    "reverb_mix": 0.2000,
+    "reverb_size": 0.5000,
+    "dist_drive": 1.5000,
+    "dist_mix": 0.1000
+  },
+  "volume": 0.5000
+}

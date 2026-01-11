@@ -1,0 +1,43 @@
+{
+  "name": "FAT BASS",
+  "oscillator": {
+    "wave1": 2,
+    "wave2": 1,
+    "mix": 0.3000,
+    "detune": 5.0000,
+    "sub_mix": 0.7000
+  },
+  "filter": {
+    "type": 0,
+    "cutoff": 0.3500,
+    "resonance": 0.2500
+  },
+  "amp_env": {
+    "attack": 0.0050,
+    "decay": 0.2000,
+    "sustain": 0.8000,
+    "release": 0.1500
+  },
+  "filter_env": {
+    "attack": 0.0100,
+    "decay": 0.3000,
+    "sustain": 0.2000,
+    "release": 0.2000,
+    "amount": 0.4000
+  },
+  "lfo": {
+    "type": 0,
+    "rate": 2.0000,
+    "depth": 0.0000
+  },
+  "effects": {
+    "delay_time": 0.3000,
+    "delay_feedback": 0.3000,
+    "delay_mix": 0.0000,
+    "reverb_mix": 0.1000,
+    "reverb_size": 0.4000,
+    "dist_drive": 2.0000,
+    "dist_mix": 0.1500
+  },
+  "volume": 0.5500
+}

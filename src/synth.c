@@ -10,6 +10,7 @@ void synth_init(Synth *s) {
     s->wave_type2 = WAVE_SQUARE;
     s->osc_mix = 0.0f;      // Default to osc1 only
     s->osc2_detune = 0.0f;  // No detune by default
+    s->sub_osc_mix = 0.0f;  // No sub by default
     s->filter_cutoff = 0.7f;
     s->filter_resonance = 0.2f;
     s->filter_type = FILTER_LOWPASS;
@@ -18,6 +19,18 @@ void synth_init(Synth *s) {
     s->decay = 0.1f;
     s->sustain = 0.7f;
     s->release = 0.3f;
+
+    // Filter envelope defaults
+    s->filter_env_attack = 0.01f;
+    s->filter_env_decay = 0.2f;
+    s->filter_env_sustain = 0.0f;
+    s->filter_env_release = 0.2f;
+    s->filter_env_amount = 0.0f;  // Off by default
+
+    // LFO defaults
+    s->lfo_rate = 2.0f;
+    s->lfo_depth = 0.0f;  // Off by default
+    s->lfo_type = LFO_SINE;
 
     s->volume = 0.5f;
 }
@@ -62,12 +75,25 @@ void synth_note_on(Synth *s, int note, int velocity) {
     // Apply global settings to voice
     osc_set_type(&v->osc, s->wave_type);
     osc_set_type(&v->osc2, s->wave_type2);
+    osc_set_type(&v->sub_osc, s->wave_type);  // Sub uses same waveform as osc1
     v->osc_mix = s->osc_mix;
     v->osc2_detune = s->osc2_detune;
+    v->sub_osc_mix = s->sub_osc_mix;
     filter_set_cutoff(&v->filter, s->filter_cutoff);
     filter_set_resonance(&v->filter, s->filter_resonance);
     filter_set_type(&v->filter, s->filter_type);
+    v->base_filter_cutoff = s->filter_cutoff;
     env_set_adsr(&v->env, s->attack, s->decay, s->sustain, s->release);
+
+    // Filter envelope settings
+    env_set_adsr(&v->filter_env, s->filter_env_attack, s->filter_env_decay,
+                 s->filter_env_sustain, s->filter_env_release);
+    v->filter_env_amount = s->filter_env_amount;
+
+    // LFO settings
+    lfo_set_rate(&v->filter_lfo, s->lfo_rate);
+    lfo_set_depth(&v->filter_lfo, s->lfo_depth);
+    lfo_set_type(&v->filter_lfo, s->lfo_type);
 
     voice_note_on(v, note, velocity);
 }
@@ -134,6 +160,16 @@ void synth_set_osc2_detune(Synth *s, float cents) {
     }
 }
 
+void synth_set_sub_osc_mix(Synth *s, float mix) {
+    if (mix < 0.0f) mix = 0.0f;
+    if (mix > 1.0f) mix = 1.0f;
+    s->sub_osc_mix = mix;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        s->voices[i].sub_osc_mix = mix;
+    }
+}
+
 void synth_set_filter(Synth *s, float cutoff, float resonance, FilterType type) {
     s->filter_cutoff = cutoff;
     s->filter_resonance = resonance;
@@ -151,6 +187,51 @@ void synth_set_adsr(Synth *s, float a, float d, float s_level, float r) {
     s->decay = d;
     s->sustain = s_level;
     s->release = r;
+}
+
+void synth_set_filter_env_adsr(Synth *s, float a, float d, float sus, float r) {
+    s->filter_env_attack = a;
+    s->filter_env_decay = d;
+    s->filter_env_sustain = sus;
+    s->filter_env_release = r;
+}
+
+void synth_set_filter_env_amount(Synth *s, float amount) {
+    if (amount < -1.0f) amount = -1.0f;
+    if (amount > 1.0f) amount = 1.0f;
+    s->filter_env_amount = amount;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        s->voices[i].filter_env_amount = amount;
+    }
+}
+
+void synth_set_lfo_rate(Synth *s, float rate) {
+    if (rate < 0.1f) rate = 0.1f;
+    if (rate > 20.0f) rate = 20.0f;
+    s->lfo_rate = rate;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        lfo_set_rate(&s->voices[i].filter_lfo, rate);
+    }
+}
+
+void synth_set_lfo_depth(Synth *s, float depth) {
+    if (depth < 0.0f) depth = 0.0f;
+    if (depth > 1.0f) depth = 1.0f;
+    s->lfo_depth = depth;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        lfo_set_depth(&s->voices[i].filter_lfo, depth);
+    }
+}
+
+void synth_set_lfo_type(Synth *s, LFOWaveType type) {
+    s->lfo_type = type;
+    // Update active voices
+    for (int i = 0; i < NUM_VOICES; i++) {
+        lfo_set_type(&s->voices[i].filter_lfo, type);
+    }
 }
 
 void synth_set_volume(Synth *s, float vol) {
